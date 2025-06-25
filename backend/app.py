@@ -11,29 +11,23 @@ import logging
 #           INITIALIZE FLASK APP
 # ================================================
 app = Flask(__name__)
-# This permissive CORS setting is good for development
 CORS(app) 
-# Configure basic logging
 logging.basicConfig(level=logging.INFO)
 # ================================================
 
 # Configuration & Constants
 mp_pose = mp.solutions.pose
-# Set static_image_mode=False for video processing
 pose_processor = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
 JOINT_PAIRS = {
-    "Shoulder": ("L Shoulder", "R Shoulder"),
-    "Elbow": ("L Elbow", "R Elbow"),
-    "Armpit": ("L Armpit", "R Armpit"),
-    "Waist": ("L Waist", "R Waist"),
+    "Shoulder": ("L Shoulder", "R Shoulder"), "Elbow": ("L Elbow", "R Elbow"),
+    "Armpit": ("L Armpit", "R Armpit"), "Waist": ("L Waist", "R Waist"),
     "Knee": ("L Knee", "R Knee"),
 }
 ALL_JOINTS = [item for pair in JOINT_PAIRS.values() for item in pair]
 
 # Helper Functions
 def calculate_angle(a, b, c):
-    # Ensure landmarks are valid before calculation
     if not all([a, b, c]): return 0.0
     a = np.array([a.x, a.y]); b = np.array([b.x, b.y]); c = np.array([c.x, c.y])
     radians = np.arctan2(c[1] - b[1], c[0] - b[0]) - np.arctan2(a[1] - b[1], a[0] - b[0])
@@ -42,10 +36,8 @@ def calculate_angle(a, b, c):
     return angle
 
 def get_angles_from_landmarks(landmarks):
-    # Get specific landmark points
     lm = landmarks.landmark
     pl = mp_pose.PoseLandmark
-    
     return {
         "L Shoulder": calculate_angle(lm[pl.LEFT_ELBOW], lm[pl.LEFT_SHOULDER], lm[pl.RIGHT_SHOULDER]),
         "R Shoulder": calculate_angle(lm[pl.RIGHT_ELBOW], lm[pl.RIGHT_SHOULDER], lm[pl.LEFT_SHOULDER]),
@@ -61,22 +53,17 @@ def get_angles_from_landmarks(landmarks):
 
 def calculate_suggested_range(angle, range_width=20, round_to=5):
     delta = range_width / 2
-    raw_lower = angle - delta
-    raw_upper = angle + delta
-    
-    # Clamp values to 0-180 range
-    raw_lower = max(0, raw_lower)
-    raw_upper = min(180, raw_upper)
-        
+    if (angle - delta) < 0:
+        raw_lower = 0
+        raw_upper = range_width
+    elif (angle + delta) > 180:
+        raw_lower = 180 - range_width
+        raw_upper = 180
+    else:
+        raw_lower = angle - delta
+        raw_upper = angle + delta
     final_lower = round(raw_lower / round_to) * round_to
     final_upper = round(raw_upper / round_to) * round_to
-    
-    if final_lower >= final_upper:
-        final_upper = final_lower + round_to
-        
-    # Ensure upper bound does not exceed 180
-    final_upper = min(180, final_upper)
-        
     return {"min": int(final_lower), "max": int(final_upper)}
 
 # ================================================
@@ -92,13 +79,15 @@ def process_video_endpoint():
         video_file = request.files['video']
         captures = json.loads(request.form.get('captures', '[]'))
         mirror_settings = json.loads(request.form.get('mirrorSettings', '{}'))
+        
+        # --- NEW: Get range_width from request, with a default of 20 ---
+        range_width = int(request.form.get('rangeWidth', 20))
 
         if not captures:
              return jsonify({"error": "No capture timestamps provided"}), 400
 
-        app.logger.info(f"Received {len(captures)} captures and mirror settings: {mirror_settings}")
+        app.logger.info(f"Received {len(captures)} captures, range width {range_width}, and mirror settings: {mirror_settings}")
 
-        # Use a temporary file to handle the upload
         temp_video_path = f"temp_{video_file.filename}"
         video_file.save(temp_video_path)
 
@@ -110,34 +99,24 @@ def process_video_endpoint():
             return jsonify({"error": "Could not open video file"}), 500
         
         video_fps = cap.get(cv2.CAP_PROP_FPS)
-
         for capture in captures:
             status_name = capture['statusName']
             timestamp = capture['time']
             frame_number = int(timestamp * video_fps)
-            
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
             ret, frame = cap.read()
-
             if ret:
                 image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                image.flags.writeable = False # Performance optimization
                 results = pose_processor.process(image)
-                image.flags.writeable = True
-
-                # --- CRITICAL BUG FIX ---
-                # Check if a pose was detected before trying to get angles
                 if results.pose_landmarks:
                     angles = get_angles_from_landmarks(results.pose_landmarks) 
                     if status_name not in raw_angles_by_status:
                         raw_angles_by_status[status_name] = []
                     raw_angles_by_status[status_name].append(angles)
-                    app.logger.info(f"Successfully processed frame {frame_number} for status '{status_name}'.")
                 else:
-                    app.logger.warning(f"No pose detected in frame {frame_number} for status '{status_name}'. Skipping.")
-
+                    app.logger.warning(f"No pose detected in frame {frame_number} for status '{status_name}'.")
         cap.release()
-        os.remove(temp_video_path) # Clean up the temp file
+        os.remove(temp_video_path)
         
         if not raw_angles_by_status:
             return jsonify({"error": "No poses could be detected in any of the captured frames."}), 400
@@ -151,7 +130,6 @@ def process_video_endpoint():
             for pair_name, (l_joint, r_joint) in JOINT_PAIRS.items():
                 l_angles = [frame[l_joint] for frame in captured_frames]
                 r_angles = [frame[r_joint] for frame in captured_frames]
-
                 if mirror_settings.get(pair_name, False):
                     combined_angles = l_angles + r_angles
                     if combined_angles:
@@ -165,7 +143,8 @@ def process_video_endpoint():
             # 4. Generate suggested min/max ranges from averages
             suggested_ranges = {}
             for joint_name, avg_angle in status_averages.items():
-                suggested_ranges[joint_name] = calculate_suggested_range(avg_angle)
+                # --- UPDATED: Pass the range_width to the calculation ---
+                suggested_ranges[joint_name] = calculate_suggested_range(avg_angle, range_width=range_width)
                 
             processed_angles[status] = {"angles": suggested_ranges}
 
