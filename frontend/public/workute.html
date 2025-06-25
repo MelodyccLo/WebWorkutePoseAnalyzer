@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Workout Pose Editor</title>
+    <title>Workute運動分析</title>
     <style>
       :root {
         --primary-color: #007bff;
@@ -97,7 +97,7 @@
       .btn-warning {
         background-color: var(--warning-color);
         color: black;
-      } /* For Re-analyze button */
+      }
       .btn-warning:hover {
         background-color: var(--warning-hover);
       }
@@ -116,6 +116,12 @@
         display: block;
         margin-bottom: 0.5rem;
         font-weight: 500;
+      }
+      .input-group .hint-text {
+        font-size: 0.8em;
+        color: #6c757d;
+        margin-top: -0.75rem;
+        margin-bottom: 1rem;
       }
       .input-group input,
       .input-group select {
@@ -136,7 +142,6 @@
         gap: 1rem;
         align-items: center;
       }
-
       .left-column,
       .right-column {
         display: flex;
@@ -148,7 +153,6 @@
         border-radius: 8px;
         background: #000;
       }
-
       .badge {
         background-color: var(--primary-hover);
         color: white;
@@ -246,47 +250,40 @@
     <div class="main-container">
       <div class="left-column">
         <div class="card">
-          <h2>1. Core Information</h2>
+          <h2>1. 運動資訊</h2>
           <div class="grid-2-col">
             <div class="input-group">
-              <label for="exerciseKey">Exercise Key</label
-              ><input
+              <label for="exerciseKey">動作代碼 (Key)</label>
+              <input
                 type="text"
                 id="exerciseKey"
-                placeholder="e.g., lateralRaise"
+                placeholder="例如：workoutName"
               />
             </div>
             <div class="input-group">
-              <label for="title">Title</label
-              ><input
-                type="text"
-                id="title"
-                placeholder="e.g., Lateral Raise"
-              />
+              <label for="title">動作標題</label>
+              <input type="text" id="title" placeholder="例如：運動名稱" />
             </div>
           </div>
           <div class="input-group">
-            <label for="statusNames">Status Names (comma-separated)</label
-            ><input type="text" id="statusNames" placeholder="e.g., up, down" />
-          </div>
-          <div class="input-group">
-            <label for="hint">Hint</label
-            ><input
+            <label for="statusNames">狀態名稱 (數量不限，用逗號分隔)</label>
+            <input
               type="text"
-              id="hint"
-              placeholder="Short hint for the user"
+              id="statusNames"
+              placeholder="例如：status1,status2 (請使用英文)"
             />
           </div>
           <div class="input-group">
-            <label for="description">Description</label
-            ><textarea
-              id="description"
-              placeholder="Main description for the exercise."
-            ></textarea>
+            <label for="hint">提示</label>
+            <input type="text" id="hint" placeholder="給使用者的運動提示" />
+          </div>
+          <div class="input-group">
+            <label for="description">運動描述</label>
+            <textarea id="description" placeholder="動作的主要描述"></textarea>
           </div>
         </div>
         <div class="card">
-          <h2>2. Repetition Pattern</h2>
+          <h2>2. 運動步驟</h2>
           <div id="pattern-builder-container"></div>
           <button
             type="button"
@@ -295,41 +292,41 @@
             style="margin-top: 1rem"
             disabled
           >
-            + Add Step to Pattern
+            + 新增狀態
           </button>
         </div>
         <div class="card">
-          <h2>3. Focus Body Parts</h2>
+          <h2>3. 顯示身體部位</h2>
           <div class="grid-2-col">
             <div class="input-group">
-              <label for="focusPos">Focus Position List</label
-              ><input type="text" id="focusPos" value="15,16,27,28" />
+              <label for="focusPos">焦點位置列表 focusPosOnlyList</label>
+              <input type="text" id="focusPos" value="15,16,27,28" />
             </div>
             <div class="input-group">
-              <label for="focusLines">Focus Lines List</label
-              ><input type="text" id="focusLines" value="0,1,2,3,4,5,6,7,8,9" />
+              <label for="focusLines">顯示部位列表 focusLinesIndexList</label>
+              <input type="text" id="focusLines" value="0,1,2,3,4,5,6,7,8,9" />
             </div>
           </div>
+
           <img
             src="bodyAngle.png"
-            alt="bodyAngleReference"
+            alt="身體角度參考圖"
             style="max-width: 100%; border-radius: 8px; margin-top: 1rem"
           />
         </div>
       </div>
-
       <div class="right-column">
         <div class="card">
-          <h2>4. Video Analysis</h2>
+          <h2>4. 動作分析</h2>
           <div class="input-group">
-            <label for="videoUpload">Upload Video</label
-            ><input type="file" id="videoUpload" accept="video/*" />
+            <label for="videoUpload">上傳運動影片</label>
+            <input type="file" id="videoUpload" accept="video/*" />
           </div>
           <video id="videoPlayer" controls></video>
-          <h3>Capture Poses</h3>
+          <h3>擷取姿勢</h3>
           <div id="capture-buttons-container" class="disabled">
             <p style="color: #666; margin: 0">
-              Define status names to enable capture buttons.
+              請先定義狀態名稱以啟用擷取按鈕。
             </p>
           </div>
           <button
@@ -338,14 +335,14 @@
             class="btn-danger hidden"
             style="margin-top: 1rem"
           >
-            Reset All Captures
+            重設所有擷取
           </button>
         </div>
         <div class="card">
-          <h2>5. Fine-Tune Angles</h2>
+          <h2>5. 微調角度</h2>
           <div id="angle-editor" class="hidden">
             <div class="input-group">
-              <label for="rangeWidth">Suggested Angle Range Width</label>
+              <label for="rangeWidth">建議角度範圍寬度</label>
               <input
                 type="number"
                 id="rangeWidth"
@@ -363,19 +360,18 @@
               tabindex="0"
               style="margin-bottom: 1rem"
             >
-              Analyze Captured Poses
+              分析已擷取的姿勢
             </div>
-
             <div id="status-tabs"></div>
             <table class="angle-table">
               <thead>
                 <tr>
-                  <th>Body Part</th>
-                  <th>L Min</th>
-                  <th>L Max</th>
-                  <th>Mirror</th>
-                  <th>R Min</th>
-                  <th>R Max</th>
+                  <th>身體部位</th>
+                  <th>左 Min</th>
+                  <th>左 Max</th>
+                  <th>鏡像</th>
+                  <th>右 Min</th>
+                  <th>右 Max</th>
                 </tr>
               </thead>
               <tbody id="joint-table"></tbody>
@@ -383,19 +379,19 @@
           </div>
         </div>
         <div class="card">
-          <h2>6. Generate & Export</h2>
+          <h2>6. 生成與匯出</h2>
           <div class="grid-3-col">
             <div id="generateBtn" class="button-as-div btn-success disabled">
-              Generate JSON
+              生成 JSON
             </div>
             <div id="copyBtn" class="button-as-div btn-secondary disabled">
-              Copy
+              複製
             </div>
             <div id="downloadBtn" class="button-as-div btn-secondary disabled">
-              Download .json
+              下載 .json
             </div>
           </div>
-          <pre id="jsonOutput">{ "status": "Waiting for analysis..." }</pre>
+          <pre id="jsonOutput">{ "狀態": "等待分析中..." }</pre>
         </div>
       </div>
     </div>
@@ -414,8 +410,8 @@
         statusOrder: [],
         activeStatus: null,
         repetitionPattern: [],
-        analysisSettingsDirty: false, // NEW: Track if settings change after analysis
-        hasAnalysisRun: false, // NEW: Track if an analysis has been completed
+        analysisSettingsDirty: false,
+        hasAnalysisRun: false,
         mirrorSettingsForNextRun: {},
       };
 
@@ -425,6 +421,13 @@
         Armpit: { L: "L Armpit", R: "R Armpit" },
         Waist: { L: "L Waist", R: "R Waist" },
         Knee: { L: "L Knee", R: "R Knee" },
+      };
+      const jointDisplayNames = {
+        Shoulder: "肩膀",
+        Elbow: "手肘",
+        Armpit: "腋下",
+        Waist: "腰部",
+        Knee: "膝蓋",
       };
       const bodyPartIndexMap = {
         "L Shoulder": 0,
@@ -510,7 +513,7 @@
         if (Object.keys(appState.captures).length > 0) {
           if (
             confirm(
-              "Changing status names will clear all existing captures, analysis results, and the repetition pattern. Are you sure?"
+              "更改狀態名稱將會清除所有已擷取的姿勢、分析結果和重複模式。確定要繼續嗎？"
             )
           ) {
             handleResetCaptures();
@@ -537,13 +540,13 @@
             button.dataset.statusName = name;
             allInputs.captureButtonsContainer.appendChild(button);
           });
-          renderAngleEditorTemplate(); // Show settings controls
+          renderAngleEditorTemplate();
         } else {
           allInputs.captureButtonsContainer.innerHTML =
-            '<p style="color: #666; margin: 0;">Define status names to enable capture buttons.</p>';
+            '<p style="color: #666; margin: 0;">請先定義狀態名稱以啟用擷取按鈕。</p>';
           allInputs.captureButtonsContainer.classList.add("disabled");
           allInputs.addPatternStepBtn.disabled = true;
-          allInputs.angleEditor.classList.add("hidden"); // Hide settings
+          allInputs.angleEditor.classList.add("hidden");
         }
         renderPatternBuilder();
         updateProcessButtonState();
@@ -570,15 +573,14 @@
         appState.repetitionPattern = [];
         appState.analysisSettingsDirty = false;
         appState.hasAnalysisRun = false;
-        appState.mirrorSettingsForNextRun = {}; // Reset the new state here
+        appState.mirrorSettingsForNextRun = {};
         appState.statusOrder.forEach((name) => {
           const badge = document.getElementById(`badge-${name}`);
           if (badge) badge.textContent = "0";
         });
         renderPatternBuilder();
         allInputs.angleEditor.classList.add("hidden");
-        allInputs.jsonOutput.textContent =
-          '{ "status": "Waiting for analysis..." }';
+        allInputs.jsonOutput.textContent = '{ "狀態": "等待分析中..." }';
         allInputs.resetCapturesBtn.classList.add("hidden");
         allInputs.copyBtn.classList.add("disabled");
         allInputs.downloadBtn.classList.add("disabled");
@@ -596,7 +598,7 @@
       async function handleProcessPoses() {
         if (allInputs.processPosesBtn.classList.contains("disabled")) return;
         const btn = allInputs.processPosesBtn;
-        btn.textContent = "Analyzing...";
+        btn.textContent = "分析中...";
         btn.classList.add("disabled");
 
         try {
@@ -610,7 +612,6 @@
               )
             )
           );
-          // This line is now cleaner, reading from the state
           formData.append(
             "mirrorSettings",
             JSON.stringify(appState.mirrorSettingsForNextRun)
@@ -629,7 +630,6 @@
           }
 
           const processedData = await response.json();
-          // Store the settings that were ACTUALLY used for this analysis run
           const mirrorSettingsUsed = { ...appState.mirrorSettingsForNextRun };
           appState.statuses = {};
           for (const statusName in processedData) {
@@ -645,8 +645,8 @@
           appState.analysisSettingsDirty = false;
           renderAngleEditor();
         } catch (error) {
-          console.error("Error processing video:", error);
-          alert(`An error occurred: ${error.message}`);
+          console.error("執行分析時發生錯誤:", error);
+          alert(`發生錯誤： ${error.message}`);
         } finally {
           updateProcessButtonState();
         }
@@ -655,7 +655,6 @@
       function handleAngleTableChange(e) {
         const target = e.target;
         if (!appState.activeStatus && !appState.hasAnalysisRun) {
-          // This handles the template view before analysis has run
           if (target.classList.contains("mirror-checkbox")) {
             const { pair } = target.dataset;
             appState.mirrorSettingsForNextRun[pair] = target.checked;
@@ -663,25 +662,20 @@
           }
           return;
         }
-
-        // This handles the view after analysis has run
         if (target.classList.contains("mirror-checkbox")) {
           const { pair } = target.dataset;
           appState.mirrorSettingsForNextRun[pair] = target.checked;
           handleSettingsChange();
           return;
         }
-
         if (target.classList.contains("angle-input")) {
           const { pair, side, type } = target.dataset;
           const value = parseInt(target.value, 10);
           const jointName = jointPairs[pair][side];
           const statusData = appState.statuses[appState.activeStatus];
-
           if (!statusData.angles[jointName])
             statusData.angles[jointName] = { min: 0, max: 0 };
           statusData.angles[jointName][type] = value;
-
           if (statusData.mirrorSettings[pair] && side === "L") {
             const rJointName = jointPairs[pair]["R"];
             if (!statusData.angles[rJointName])
@@ -692,7 +686,6 @@
         }
       }
 
-      // --- UI & STATE MANAGEMENT ---
       function updateProcessButtonState() {
         const totalCaptures = Object.values(appState.captures).flat().length;
         const allStatusesHaveCaptures =
@@ -707,19 +700,18 @@
           btn.classList.remove("btn-warning");
           btn.classList.add("btn-primary");
           if (appState.analysisSettingsDirty) {
-            btn.textContent = "Re-analyze with New Settings";
+            btn.textContent = "使用新設定重新分析";
             btn.classList.add("btn-warning");
             btn.classList.remove("btn-primary");
           } else {
-            btn.textContent = `Analyze ${totalCaptures} Captured Poses`;
+            btn.textContent = `分析 ${totalCaptures} 個已擷取的姿勢`;
           }
         } else {
           btn.classList.add("disabled");
-          btn.textContent = "Analyze Captured Poses";
+          btn.textContent = "分析已擷取的姿勢";
         }
       }
 
-      // --- All other functions are here for completeness ---
       function addPatternStep() {
         const firstStatus = appState.statusOrder[0] || "";
         appState.repetitionPattern.push({
@@ -752,11 +744,11 @@
         if (allInputs.generateBtn.classList.contains("disabled")) return;
         readInputsIntoState();
         if (!appState.generalInfo.key) {
-          alert("Please enter an Exercise Key.");
+          alert("請輸入動作代碼 (Key)。");
           return;
         }
         if (appState.statusOrder.length === 0) {
-          alert("Please define at least one status.");
+          alert("請至少定義一個狀態。");
           return;
         }
         const finalJson = buildFinalJson();
@@ -770,14 +762,14 @@
           .writeText(allInputs.jsonOutput.textContent)
           .then(() => {
             const originalText = allInputs.copyBtn.textContent;
-            allInputs.copyBtn.textContent = "Copied!";
+            allInputs.copyBtn.textContent = "已複製！";
             setTimeout(() => {
               allInputs.copyBtn.textContent = originalText;
             }, 2000);
           })
           .catch((err) => {
-            console.error("Failed to copy text: ", err);
-            alert("Failed to copy text.");
+            console.error("複製文字失敗：", err);
+            alert("複製文字失敗。");
           });
       }
       function handleDownload() {
@@ -872,13 +864,11 @@
         allInputs.angleEditor.classList.remove("hidden");
         allInputs.jointTableContainer.innerHTML = "";
         allInputs.statusTabsContainer.innerHTML = "";
-
         for (const pairName in jointPairs) {
-          // When first creating the template, set all mirror settings to true
           appState.mirrorSettingsForNextRun[pairName] = true;
           const row = document.createElement("tr");
           row.innerHTML = `
-                  <td>${pairName}</td>
+                  <td>${jointDisplayNames[pairName]}</td>
                   <td><input type="number" disabled></td><td><input type="number" disabled></td>
                   <td><input type="checkbox" class="mirror-checkbox" data-pair="${pairName}" checked></td>
                   <td><input type="number" disabled></td><td><input type="number" disabled></td>
@@ -933,14 +923,15 @@
                 }>${name}</option>`
             )
             .join("");
-          stepDiv.innerHTML = `<span>Step ${
+          stepDiv.innerHTML = `<span>步驟 ${
             index + 1
           }:</span><select class="pattern-status-select">${statusOptions}</select><label style="display: flex; align-items: center; gap: 5px; white-space: nowrap;"><input type="checkbox" class="pattern-rep-checkbox" ${
             step.countsAsRep ? "checked" : ""
-          }> Counts as Rep</label><span class="remove-step-btn" title="Remove Step">&times;</span>`;
+          }> 算完成一次</label><span class="remove-step-btn" title="Remove Step">&times;</span>`;
           allInputs.patternBuilderContainer.appendChild(stepDiv);
         });
       }
+
       function renderJointTable() {
         allInputs.jointTableContainer.innerHTML = "";
         const activeStatusData = appState.statuses[appState.activeStatus];
@@ -948,17 +939,15 @@
 
         for (const pairName in jointPairs) {
           const pair = jointPairs[pairName];
-          // Read checkbox state from our reliable appState object
           const isMirroredForNextRun =
             appState.mirrorSettingsForNextRun[pairName];
           const wasMirroredForThisData =
             activeStatusData.mirrorSettings[pairName];
-
           const lJoint = activeStatusData.angles[pair.L] || { min: 0, max: 0 };
           const rJoint = activeStatusData.angles[pair.R] || { min: 0, max: 0 };
           const row = document.createElement("tr");
           row.innerHTML = `
-                  <td>${pairName}</td>
+                  <td>${jointDisplayNames[pairName]}</td>
                   <td><input type="number" class="angle-input" data-side="L" data-type="min" data-pair="${pairName}" value="${
             lJoint.min
           }"></td>
