@@ -157,4 +157,4 @@ def process_video_endpoint():
 
 # Run Server
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=3000)
